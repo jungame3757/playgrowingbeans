@@ -18,7 +18,7 @@ export default function Home() {
             Growing Beans English
           </h1>
           <p className="text-2xl text-gray-600 font-comic">
-            Let's Learn English Together! 🎨
+            Let&apos;s Learn English Together! 🎨
           </p>
         </header>
 
@@ -34,7 +34,7 @@ export default function Home() {
                 <h2 className="text-3xl font-bold text-gray-800 mb-2 font-comic">{level.title}</h2>
                 <p className="text-gray-600 text-lg">{level.description}</p>
                 <div className="mt-4 flex items-center text-purple-600">
-                  <span className="text-lg font-comic">Let's Start!</span>
+                  <span className="text-lg font-comic">Let&apos;s Start!</span>
                   <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
