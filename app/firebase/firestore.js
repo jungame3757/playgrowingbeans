@@ -113,7 +113,8 @@ export async function getQuarterVideos(levelId, quarterId) {
       });
     });
     
-    return videos;
+    // 제목(title)을 기준으로 오름차순 정렬
+    return videos.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
   } catch (error) {
     console.error('분기별 영상 불러오기 오류:', error);
     throw error;
@@ -143,7 +144,8 @@ export async function getWeekVideos(levelId, quarterId, monthId, weekId) {
       });
     });
     
-    return videos;
+    // 제목(title)을 기준으로 오름차순 정렬
+    return videos.sort((a, b) => a.title.localeCompare(b.title, 'ko'));
   } catch (error) {
     console.error('주차별 영상 불러오기 오류:', error);
     throw error;

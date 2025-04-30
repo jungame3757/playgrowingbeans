@@ -3,13 +3,13 @@
   "/api/proxy/route": "/api/proxy",
   "/favicon.ico/route": "/favicon.ico",
   "/levels/[id]/[quarter]/[month]/page": "/levels/[id]/[quarter]/[month]",
-  "/admin/page": "/admin",
-  "/levels/[id]/[quarter]/[month]/[week]/page": "/levels/[id]/[quarter]/[month]/[week]",
   "/levels/[id]/[quarter]/videos/page": "/levels/[id]/[quarter]/videos",
-  "/levels/[id]/page": "/levels/[id]",
+  "/levels/[id]/[quarter]/[month]/[week]/page": "/levels/[id]/[quarter]/[month]/[week]",
+  "/admin/page": "/admin",
   "/login/page": "/login",
-  "/page": "/",
-  "/posts/[id]/page": "/posts/[id]",
+  "/levels/[id]/page": "/levels/[id]",
   "/posts/new/page": "/posts/new",
-  "/register/page": "/register"
+  "/page": "/",
+  "/register/page": "/register",
+  "/posts/[id]/page": "/posts/[id]"
 }
