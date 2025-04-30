@@ -1,0 +1,15 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/proxy/route": "app/api/proxy/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/levels/[id]/[quarter]/[month]/[week]/page": "app/levels/[id]/[quarter]/[month]/[week]/page.js",
+  "/levels/[id]/[quarter]/[month]/page": "app/levels/[id]/[quarter]/[month]/page.js",
+  "/login/page": "app/login/page.js",
+  "/levels/[id]/[quarter]/videos/page": "app/levels/[id]/[quarter]/videos/page.js",
+  "/levels/[id]/page": "app/levels/[id]/page.js",
+  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/posts/new/page": "app/posts/new/page.js",
+  "/register/page": "app/register/page.js",
+  "/posts/[id]/page": "app/posts/[id]/page.js"
+}

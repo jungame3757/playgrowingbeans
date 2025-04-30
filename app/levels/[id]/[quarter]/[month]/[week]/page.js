@@ -44,13 +44,28 @@ function VideoPlayer({ videoUrl, thumbnail }) {
     if (!videoRef.current || !videoUrl || !isHlsLoaded) return;
 
     const setupHls = () => {
+      // URL 형식 수정: 누락된 슬래시 추가 및 절대 경로 확인
+      let correctUrl = videoUrl;
+      
+      // URL이 'https:/'로 시작하면 'https://'로 수정
+      if (correctUrl.startsWith('https:/') && !correctUrl.startsWith('https://')) {
+        correctUrl = correctUrl.replace('https:/', 'https://');
+      }
+      
+      // URL이 '//'로 시작하지 않고 'http'로 시작하지 않으면 'https://'를 앞에 추가
+      if (!correctUrl.startsWith('//') && !correctUrl.startsWith('http')) {
+        correctUrl = 'https://' + correctUrl;
+      }
+      
+      console.log('비디오 로딩 URL:', correctUrl);
+      
       if (window.Hls.isSupported()) {
         const hls = new window.Hls();
-        hls.loadSource(videoUrl);
+        hls.loadSource(correctUrl);
         hls.attachMedia(videoRef.current);
       } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari에서는 HLS를 네이티브로 지원
-        videoRef.current.src = videoUrl;
+        videoRef.current.src = correctUrl;
       } else {
         console.error('HLS가 지원되지 않는 브라우저입니다');
       }
@@ -108,18 +123,14 @@ export default function WeekDetail() {
       title: '인사하는 방법',
       description: '인사하는 방법을 배워봐요!',
       videoUrl: 'https://d3asw5knevel36.cloudfront.net/videos/레벨1/1분기/hls/레벨1 복습영상 3월 1주/레벨1 복습영상 3월 1주.m3u8',
-      thumbnail: '/thumbnails/hello.jpg',
-      script: '안녕하세요! 만나서 반가워요!',
-      icon: '👋'
+      thumbnail: '/thumbnails/hello.jpg'
     },
     {
       id: 2,
       title: 'ABC 노래',
       description: '알파벳을 배워봐요!',
       videoUrl: 'https://d3asw5knevel36.cloudfront.net/videos/레벨1/1분기/hls/레벨1 복습영상 3월 1주/레벨1 복습영상 3월 1주.m3u8',
-      thumbnail: '/thumbnails/abc.jpg',
-      script: 'A, B, C, D, E, F, G...',
-      icon: '🔤'
+      thumbnail: '/thumbnails/abc.jpg'
     }
   ];
 
@@ -166,25 +177,17 @@ export default function WeekDetail() {
           <div className="space-y-8">
             {lessons.map((lesson) => (
               <div key={lesson.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
-                <div className="flex items-center mb-4">
-                  <span className="text-4xl mr-4">{lesson.icon}</span>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
-                    <p className="text-gray-600 font-comic">{lesson.description}</p>
-                  </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
+                  <p className="text-gray-600 font-comic">{lesson.description}</p>
                 </div>
                 
-                <div className="aspect-video mb-4 rounded-xl overflow-hidden border-4 border-purple-100">
+                <div className="aspect-video my-4 rounded-xl overflow-hidden border-4 border-purple-100">
                   {/* HLS 스트리밍을 위한 비디오 플레이어 */}
                   <VideoPlayer 
                     videoUrl={lesson.videoUrl} 
                     thumbnail={lesson.thumbnail} 
                   />
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-100">
-                  <h3 className="font-bold text-purple-600 mb-2 font-comic">따라해 보세요!</h3>
-                  <p className="text-gray-700 text-lg font-comic">{lesson.script}</p>
                 </div>
               </div>
             ))}
@@ -194,25 +197,17 @@ export default function WeekDetail() {
           <div className="space-y-8">
             {tempLessons.map((lesson) => (
               <div key={lesson.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
-                <div className="flex items-center mb-4">
-                  <span className="text-4xl mr-4">{lesson.icon}</span>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
-                    <p className="text-gray-600 font-comic">{lesson.description}</p>
-                  </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
+                  <p className="text-gray-600 font-comic">{lesson.description}</p>
                 </div>
                 
-                <div className="aspect-video mb-4 rounded-xl overflow-hidden border-4 border-purple-100">
+                <div className="aspect-video my-4 rounded-xl overflow-hidden border-4 border-purple-100">
                   {/* HLS 스트리밍을 위한 비디오 플레이어 */}
                   <VideoPlayer 
                     videoUrl={lesson.videoUrl} 
                     thumbnail={lesson.thumbnail} 
                   />
-                </div>
-
-                <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-100">
-                  <h3 className="font-bold text-purple-600 mb-2 font-comic">따라해 보세요!</h3>
-                  <p className="text-gray-700 text-lg font-comic">{lesson.script}</p>
                 </div>
               </div>
             ))}

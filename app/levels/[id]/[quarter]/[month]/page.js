@@ -2,6 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { getWeekVideos } from '../../../../firebase/firestore';
 
 const monthNames = {
   m1: '1분기 첫번째 달',
@@ -35,6 +37,36 @@ const weeks = [
 export default function MonthDetail() {
   const params = useParams();
   const { id: levelId, quarter, month } = params;
+  const [weekVideos, setWeekVideos] = useState({
+    w1: false,
+    w2: false,
+    w3: false,
+    w4: false
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVideosData() {
+      try {
+        setLoading(true);
+        const results = {};
+        
+        // 각 주차별로 영상 데이터가 있는지 확인
+        for (const week of weeks) {
+          const videos = await getWeekVideos(levelId, quarter, month, week.id);
+          results[week.id] = videos.length > 0;
+        }
+        
+        setWeekVideos(results);
+        setLoading(false);
+      } catch (err) {
+        console.error('주차별 영상 데이터 확인 오류:', err);
+        setLoading(false);
+      }
+    }
+
+    fetchVideosData();
+  }, [levelId, quarter, month]);
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
@@ -60,25 +92,45 @@ export default function MonthDetail() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {weeks.map((week) => (
-            <Link
-              key={week.id}
-              href={`/levels/${levelId}/${quarter}/${month}/${week.id}`}
-              className="block"
-            >
-              <div className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg transform hover:scale-105 transition-transform duration-300">
-                <div className="flex items-center">
-                  <span className="text-4xl mr-4">{week.icon}</span>
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-800 font-comic">{week.title}</h2>
-                    <p className="text-gray-600 font-comic">이번 주차 수업을 확인해보세요!</p>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-bounce text-5xl mb-4">🔄</div>
+            <p className="text-gray-600 font-comic">데이터를 불러오고 있어요...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {weeks.map((week) => (
+              weekVideos[week.id] && (
+                <Link
+                  key={week.id}
+                  href={`/levels/${levelId}/${quarter}/${month}/${week.id}`}
+                  className="block"
+                >
+                  <div className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div className="flex items-center">
+                      <span className="text-4xl mr-4">{week.icon}</span>
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800 font-comic">{week.title}</h2>
+                        <p className="text-gray-600 font-comic">이번 주차 수업을 확인해보세요!</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </Link>
+              )
+            ))}
+            
+            {/* 주차별 영상이 하나도 없는 경우 메시지 표시 */}
+            {!Object.values(weekVideos).some(hasVideo => hasVideo) && (
+              <div className="col-span-1 md:col-span-2 bg-white rounded-2xl p-6 border-4 border-white shadow-lg text-center">
+                <div className="text-6xl mb-4">📭</div>
+                <h2 className="text-2xl font-bold text-gray-600 mb-2 font-comic">아직 영상 자료가 없어요</h2>
+                <p className="text-gray-500 font-comic">
+                  준비 중이니 조금만 기다려주세요!
+                </p>
               </div>
-            </Link>
-          ))}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );

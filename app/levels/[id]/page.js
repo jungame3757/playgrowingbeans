@@ -2,6 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { getQuarterVideos } from '../../firebase/firestore';
 
 const levelColors = {
   1: 'bg-yellow-100',
@@ -66,6 +68,36 @@ const quarters = [
 
 export default function LevelDetail() {
   const params = useParams();
+  const [quarterVideos, setQuarterVideos] = useState({
+    q1: false,
+    q2: false,
+    q3: false,
+    q4: false
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchVideosData() {
+      try {
+        setLoading(true);
+        const results = {};
+        
+        // 각 분기별로 영상 데이터베이스가 있는지 확인
+        for (const quarter of quarters) {
+          const videos = await getQuarterVideos(params.id, quarter.id);
+          results[quarter.id] = videos.length > 0;
+        }
+        
+        setQuarterVideos(results);
+        setLoading(false);
+      } catch (err) {
+        console.error('영상 데이터 확인 오류:', err);
+        setLoading(false);
+      }
+    }
+
+    fetchVideosData();
+  }, [params.id]);
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
@@ -92,43 +124,63 @@ export default function LevelDetail() {
           </p>
         </div>
 
-        <div className="space-y-8">
-          {quarters.map((quarter) => (
-            <div key={quarter.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
-              <h2 className="text-3xl font-bold text-purple-600 mb-6 font-comic">
-                {quarter.title}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {quarter.months.map((month) => (
-                  <Link
-                    key={month.id}
-                    href={`/levels/${params.id}/${quarter.id}/${month.id}`}
-                    className="block"
-                  >
-                    <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-100 hover:border-purple-300 transition-colors">
-                      <div className="text-3xl mb-2">{month.icon}</div>
-                      <h3 className="text-lg font-bold text-gray-800 font-comic">
-                        {month.title}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block animate-bounce text-5xl mb-4">🔄</div>
+            <p className="text-gray-600 font-comic">데이터를 불러오고 있어요...</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {quarters.map((quarter) => (
+              <div key={quarter.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
+                <h2 className="text-3xl font-bold text-purple-600 mb-6 font-comic">
+                  {quarter.title}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {quarter.months.map((month) => (
+                    <Link
+                      key={month.id}
+                      href={`/levels/${params.id}/${quarter.id}/${month.id}`}
+                      className="block"
+                    >
+                      <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-100 hover:border-purple-300 transition-colors">
+                        <div className="text-3xl mb-2">{month.icon}</div>
+                        <h3 className="text-lg font-bold text-gray-800 font-comic">
+                          {month.title}
+                        </h3>
+                      </div>
+                    </Link>
+                  ))}
+                  
+                  {/* 영상 데이터베이스가 있는 경우에만 버튼 표시 */}
+                  {quarterVideos[quarter.id] ? (
+                    <Link
+                      href={`/levels/${params.id}/${quarter.id}/videos`}
+                      className="block"
+                    >
+                      <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-100 hover:border-purple-300 transition-colors">
+                        <div className="text-3xl mb-2">{quarter.videoLibrary.icon}</div>
+                        <h3 className="text-lg font-bold text-gray-800 font-comic">
+                          {quarter.videoLibrary.title}
+                        </h3>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-100">
+                      <div className="text-3xl mb-2 text-gray-400">📭</div>
+                      <h3 className="text-lg font-bold text-gray-400 font-comic">
+                        영상 자료 준비 중
                       </h3>
+                      <p className="text-sm text-gray-400 font-comic">
+                        아직 영상 자료가 없어요
+                      </p>
                     </div>
-                  </Link>
-                ))}
-                
-                <Link
-                  href={`/levels/${params.id}/${quarter.id}/videos`}
-                  className="block"
-                >
-                  <div className="bg-purple-50 rounded-xl p-4 border-2 border-purple-100 hover:border-purple-300 transition-colors">
-                    <div className="text-3xl mb-2">{quarter.videoLibrary.icon}</div>
-                    <h3 className="text-lg font-bold text-gray-800 font-comic">
-                      {quarter.videoLibrary.title}
-                    </h3>
-                  </div>
-                </Link>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
