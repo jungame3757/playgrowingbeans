@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { getWeekVideos } from '../../../../../firebase/firestore';
 import Script from 'next/script';
+import { useAuth } from '../../../../../contexts/AuthContext';
 
 const monthNames = {
   m1: '1분기 첫번째 달',
@@ -57,15 +58,17 @@ function VideoPlayer({ videoUrl, thumbnail }) {
         correctUrl = 'https://' + correctUrl;
       }
       
-      console.log('비디오 로딩 URL:', correctUrl);
+      // 프록시 API를 통해 비디오 URL 로드
+      const proxyUrl = `/api/proxy?url=${encodeURIComponent(correctUrl)}`;
+      console.log('비디오 로딩 URL:', proxyUrl);
       
       if (window.Hls.isSupported()) {
         const hls = new window.Hls();
-        hls.loadSource(correctUrl);
+        hls.loadSource(proxyUrl);
         hls.attachMedia(videoRef.current);
       } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari에서는 HLS를 네이티브로 지원
-        videoRef.current.src = correctUrl;
+        videoRef.current.src = proxyUrl;
       } else {
         console.error('HLS가 지원되지 않는 브라우저입니다');
       }
@@ -97,6 +100,8 @@ export default function WeekDetail() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isAdmin, isTeacher } = useAuth();
+  const canDownload = isAdmin || isTeacher;
 
   useEffect(() => {
     async function fetchData() {
@@ -133,6 +138,21 @@ export default function WeekDetail() {
       thumbnail: '/thumbnails/abc.jpg'
     }
   ];
+
+  // 다운로드 핸들러
+  const handleDownload = (videoUrl, title) => {
+    // HLS 스트리밍 URL을 MP4 URL로 변환
+    const mp4Url = videoUrl.replace('.m3u8', '.mp4').replace('/hls/', '/');
+    
+    // 다운로드 링크 생성 및 클릭
+    const link = document.createElement('a');
+    link.href = mp4Url;
+    link.download = `${title}.mp4`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
@@ -177,9 +197,23 @@ export default function WeekDetail() {
           <div className="space-y-8">
             {lessons.map((lesson) => (
               <div key={lesson.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
-                  <p className="text-gray-600 font-comic">{lesson.description}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
+                    <p className="text-gray-600 font-comic">{lesson.description}</p>
+                  </div>
+                  
+                  {canDownload && (
+                    <button
+                      onClick={() => handleDownload(lesson.videoUrl, lesson.title)}
+                      className="flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      다운로드
+                    </button>
+                  )}
                 </div>
                 
                 <div className="aspect-video my-4 rounded-xl overflow-hidden border-4 border-purple-100">
@@ -197,9 +231,23 @@ export default function WeekDetail() {
           <div className="space-y-8">
             {tempLessons.map((lesson) => (
               <div key={lesson.id} className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
-                  <p className="text-gray-600 font-comic">{lesson.description}</p>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800 font-comic">{lesson.title}</h2>
+                    <p className="text-gray-600 font-comic">{lesson.description}</p>
+                  </div>
+                  
+                  {canDownload && (
+                    <button
+                      onClick={() => handleDownload(lesson.videoUrl, lesson.title)}
+                      className="flex items-center bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition duration-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      다운로드
+                    </button>
+                  )}
                 </div>
                 
                 <div className="aspect-video my-4 rounded-xl overflow-hidden border-4 border-purple-100">
