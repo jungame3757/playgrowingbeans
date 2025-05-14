@@ -1,6 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // 사용자가 관리자인지 확인하는 함수
+    function isAdmin() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // 사용자가 선생님인지 확인하는 함수
+    function isTeacher() {
+      return request.auth != null && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+    }
+
     // 사용자 기본 정보
     match /users/{userId} {
       // 모든 사용자는 자신의 정보를 읽을 수 있음
@@ -8,30 +20,28 @@ service cloud.firestore {
       // 관리자는 모든 사용자 정보를 읽을 수 있음
       allow read: if request.auth != null && 
                   (request.auth.uid == userId || 
-                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-                   (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && 
-                    get(/databases/$(database)/documents/users/$(userId)).data.teacherId == request.auth.uid));
+                   isAdmin() ||
+                   isTeacher());
       
-      // 새 계정 생성은 인증된 모든 사용자가 가능
-      allow create: if request.auth != null;
+      // 새 계정 생성은 관리자만 가능
+      // 관리자는 선생님과 다른 관리자 계정도 생성 가능
+      allow create: if isAdmin() && (
+                     request.resource.data.role == 'teacher' || 
+                     request.resource.data.role == 'admin' ||
+                     request.resource.data.role == 'student'
+                   );
       
-      // 관리자와 선생님만 사용자 삭제 가능
-      // 관리자는 모든 사용자 삭제 가능
-      // 선생님은 자신의 학생만 삭제 가능
-      allow delete: if request.auth != null &&
-                    ((get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-                     (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && 
-                      get(/databases/$(database)/documents/users/$(userId)).data.teacherId == request.auth.uid));
+      // 관리자만 사용자 삭제 가능
+      allow delete: if isAdmin();
       
       // 사용자 업데이트 규칙
       // 자신의 정보는 업데이트 가능
       // 관리자는 모든 사용자 정보 업데이트 가능
       // 선생님은 자신의 학생 정보 업데이트 가능
       allow update: if request.auth != null &&
-                    (request.auth.uid == userId ||
-                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-                     (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher' && 
-                      get(/databases/$(database)/documents/users/$(userId)).data.teacherId == request.auth.uid));
+                   (request.auth.uid == userId ||
+                    isAdmin() ||
+                    (isTeacher() && resource.data.role == 'student'));
     }
     
     // 그룹 정보 규칙
@@ -40,20 +50,17 @@ service cloud.firestore {
       allow read: if request.auth != null;
       
       // 관리자와 선생님만 그룹 생성/수정/삭제 가능
-      allow write: if request.auth != null && 
-                   (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher');
+      allow write: if isAdmin() || isTeacher();
     }
     
     // 비디오 컬렉션 접근 규칙
     match /videos/{videoId} {
-      // 모든 사용자(로그인하지 않은 사용자 포함)는 비디오 데이터 읽기 가능
+      // 모든 사용자가 비디오 데이터를 읽을 수 있음
+      // 권한 체크는 애플리케이션 로직에서 처리
       allow read: if true;
       
-      // 관리자와 선생님만 비디오 생성/수정/삭제 가능
-      allow write: if request.auth != null && 
-                   (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher');
+      // 관리자만 비디오 생성/수정/삭제 가능
+      allow write: if isAdmin();
     }
     
     // 서브컬렉션 접근 규칙
@@ -61,15 +68,15 @@ service cloud.firestore {
       // 자신과 관리자만 접근 가능
       allow read, write: if request.auth != null && 
                           (request.auth.uid == userId || 
-                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+                           isAdmin());
     }
     
     match /users/{userId}/students/{studentId} {
       // 선생님과 관리자만 접근 가능
       allow read, write: if request.auth != null && 
                           (request.auth.uid == userId || 
-                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-                           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher');
+                           isAdmin() ||
+                           isTeacher());
     }
   }
 } 

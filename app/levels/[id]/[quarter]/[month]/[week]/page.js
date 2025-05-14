@@ -15,8 +15,9 @@ export default function WeekDetail() {
   const [lessons, setLessons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { isAdmin, isTeacher } = useAuth();
-  const canDownload = isAdmin || isTeacher;
+  const { user, isAdmin, isTeacher } = useAuth();
+  const hasAccess = isAdmin || isTeacher;
+  const canDownload = hasAccess;
 
   useEffect(() => {
     async function fetchData() {
@@ -24,7 +25,10 @@ export default function WeekDetail() {
         setLoading(true);
         // Firebase에서 해당 주차의 비디오 데이터 가져오기
         const videos = await getWeekVideos(levelId, quarter, month, week);
-        setLessons(videos);
+        // 권한이 있는 사용자는 모든 비디오를 볼 수 있고,
+        // 권한이 없는 사용자는 library 타입의 비디오만 볼 수 있음
+        const filteredVideos = hasAccess ? videos : videos.filter(video => video.type === 'library');
+        setLessons(filteredVideos);
         setLoading(false);
       } catch (err) {
         console.error('비디오 데이터 불러오기 오류:', err);
@@ -34,25 +38,44 @@ export default function WeekDetail() {
     }
 
     fetchData();
-  }, [levelId, quarter, month, week]);
+  }, [levelId, quarter, month, week, hasAccess]);
 
-  // 데이터가 없을 경우 보여줄 임시 데이터 (Firebase에 실제 데이터가 없을 때)
-  const tempLessons = [
-    {
-      id: 1,
-      title: '인사하는 방법',
-      description: '인사하는 방법을 배워봐요!',
-      videoUrl: 'https://d3asw5knevel36.cloudfront.net/videos/레벨1/1분기/hls/레벨1 복습영상 3월 1주/레벨1 복습영상 3월 1주.m3u8',
-      thumbnail: '/thumbnails/hello.jpg'
-    },
-    {
-      id: 2,
-      title: 'ABC 노래',
-      description: '알파벳을 배워봐요!',
-      videoUrl: 'https://d3asw5knevel36.cloudfront.net/videos/레벨1/1분기/hls/레벨1 복습영상 3월 1주/레벨1 복습영상 3월 1주.m3u8',
-      thumbnail: '/thumbnails/abc.jpg'
-    }
-  ];
+  // 권한이 없는 경우 접근 제한 메시지 표시
+  if (!hasAccess) {
+    return (
+      <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Link 
+              href={`/levels/${levelId}/${quarter}/${month}`}
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-comic"
+            >
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              {monthNames[month]}으로 돌아가기
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-gray-600 mb-2 font-comic">접근 권한이 없습니다</h2>
+            <p className="text-gray-500 font-comic">
+              이 페이지는 선생님과 관리자만 접근할 수 있습니다.
+            </p>
+            {!user && (
+              <Link
+                href="/login"
+                className="mt-4 inline-block bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                로그인하기
+              </Link>
+            )}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
@@ -94,16 +117,12 @@ export default function WeekDetail() {
             ))}
           </div>
         ) : (
-          // Firebase에 데이터가 없을 경우 템플릿 데이터 표시
-          <div className="space-y-8">
-            {tempLessons.map((lesson) => (
-              <VideoCard 
-                key={lesson.id} 
-                video={lesson} 
-                canDownload={canDownload} 
-                layout="horizontal"
-              />
-            ))}
+          <div className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg text-center">
+            <div className="text-6xl mb-4">📭</div>
+            <h2 className="text-2xl font-bold text-gray-600 mb-2 font-comic">아직 영상 자료가 없어요</h2>
+            <p className="text-gray-500 font-comic">
+              준비 중이니 조금만 기다려주세요!
+            </p>
           </div>
         )}
       </div>

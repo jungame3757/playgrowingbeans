@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getWeekVideos } from '../../../../firebase/firestore';
+import { useAuth } from '../../../../contexts/AuthContext';
 
 const monthNames = {
   m1: '1분기 첫번째 달',
@@ -44,6 +45,8 @@ export default function MonthDetail() {
     w4: false
   });
   const [loading, setLoading] = useState(true);
+  const { user, isAdmin, isTeacher } = useAuth();
+  const hasAccess = isAdmin || isTeacher;
 
   useEffect(() => {
     async function fetchVideosData() {
@@ -54,7 +57,10 @@ export default function MonthDetail() {
         // 각 주차별로 영상 데이터가 있는지 확인
         for (const week of weeks) {
           const videos = await getWeekVideos(levelId, quarter, month, week.id);
-          results[week.id] = videos.length > 0;
+          // 권한이 있는 사용자는 모든 비디오를 볼 수 있고,
+          // 권한이 없는 사용자는 library 타입의 비디오만 볼 수 있음
+          const filteredVideos = hasAccess ? videos : videos.filter(video => video.type === 'library');
+          results[week.id] = filteredVideos.length > 0;
         }
         
         setWeekVideos(results);
@@ -66,7 +72,44 @@ export default function MonthDetail() {
     }
 
     fetchVideosData();
-  }, [levelId, quarter, month]);
+  }, [levelId, quarter, month, hasAccess]);
+
+  // 권한이 없는 경우 접근 제한 메시지 표시
+  if (!hasAccess) {
+    return (
+      <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Link 
+              href={`/levels/${levelId}`}
+              className="inline-flex items-center text-purple-600 hover:text-purple-700 font-comic"
+            >
+              <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              레벨 {levelId}로 돌아가기
+            </Link>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border-4 border-white shadow-lg text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-gray-600 mb-2 font-comic">접근 권한이 없습니다</h2>
+            <p className="text-gray-500 font-comic">
+              이 페이지는 선생님과 관리자만 접근할 수 있습니다.
+            </p>
+            {!user && (
+              <Link
+                href="/login"
+                className="mt-4 inline-block bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                로그인하기
+              </Link>
+            )}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">

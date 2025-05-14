@@ -15,10 +15,10 @@ export default function Home() {
       <div className="max-w-6xl mx-auto">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-bold text-purple-600 mb-4 font-comic">
-            Growing Beans English
+            그로잉 빈스 학습 자료실
           </h1>
           <p className="text-2xl text-gray-600 font-comic">
-            Let&apos;s Learn English Together! 🎨
+            모든 학습 영상을 여기서 찾아보세요! 🎨
           </p>
         </header>
 

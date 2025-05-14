@@ -1,15 +1,16 @@
 {
-  "/_not-found/page": "/_not-found",
+  "/api/download-video/route": "/api/download-video",
   "/api/proxy/route": "/api/proxy",
+  "/_not-found/page": "/_not-found",
   "/favicon.ico/route": "/favicon.ico",
-  "/levels/[id]/[quarter]/[month]/page": "/levels/[id]/[quarter]/[month]",
-  "/levels/[id]/[quarter]/videos/page": "/levels/[id]/[quarter]/videos",
-  "/levels/[id]/[quarter]/[month]/[week]/page": "/levels/[id]/[quarter]/[month]/[week]",
   "/admin/page": "/admin",
-  "/login/page": "/login",
+  "/levels/[id]/[quarter]/[month]/page": "/levels/[id]/[quarter]/[month]",
+  "/levels/[id]/[quarter]/[month]/[week]/page": "/levels/[id]/[quarter]/[month]/[week]",
+  "/levels/[id]/[quarter]/videos/page": "/levels/[id]/[quarter]/videos",
   "/levels/[id]/page": "/levels/[id]",
+  "/login/page": "/login",
   "/posts/new/page": "/posts/new",
-  "/page": "/",
   "/register/page": "/register",
-  "/posts/[id]/page": "/posts/[id]"
+  "/posts/[id]/page": "/posts/[id]",
+  "/page": "/"
 }

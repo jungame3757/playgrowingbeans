@@ -42,7 +42,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-md">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-purple-600">관리자 로그인</h2>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-purple-600">로그인</h2>
         </div>
         {error && (
           <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4" role="alert">

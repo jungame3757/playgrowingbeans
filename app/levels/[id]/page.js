@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getQuarterVideos } from '../../firebase/firestore';
+import { useAuth } from '../../contexts/AuthContext';
 
 const levelColors = {
   1: 'bg-yellow-100',
@@ -75,6 +76,8 @@ export default function LevelDetail() {
     q4: false
   });
   const [loading, setLoading] = useState(true);
+  const { user, isAdmin, isTeacher } = useAuth();
+  const hasAccess = isAdmin || isTeacher;
 
   useEffect(() => {
     async function fetchVideosData() {
@@ -85,7 +88,10 @@ export default function LevelDetail() {
         // 각 분기별로 영상 데이터베이스가 있는지 확인
         for (const quarter of quarters) {
           const videos = await getQuarterVideos(params.id, quarter.id);
-          results[quarter.id] = videos.length > 0;
+          // 권한이 있는 사용자는 모든 비디오를 볼 수 있고,
+          // 권한이 없는 사용자는 library 타입의 비디오만 볼 수 있음
+          const filteredVideos = hasAccess ? videos : videos.filter(video => video.type === 'library');
+          results[quarter.id] = filteredVideos.length > 0;
         }
         
         setQuarterVideos(results);
@@ -97,7 +103,7 @@ export default function LevelDetail() {
     }
 
     fetchVideosData();
-  }, [params.id]);
+  }, [params.id, hasAccess]);
 
   return (
     <main className="min-h-screen p-8 bg-gradient-to-b from-blue-50 to-purple-50">
@@ -137,7 +143,8 @@ export default function LevelDetail() {
                   {quarter.title}
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {quarter.months.map((month) => (
+                  {/* 월별 버튼은 권한이 있는 사용자에게만 표시 */}
+                  {hasAccess && quarter.months.map((month) => (
                     <Link
                       key={month.id}
                       href={`/levels/${params.id}/${quarter.id}/${month.id}`}
@@ -152,8 +159,8 @@ export default function LevelDetail() {
                     </Link>
                   ))}
                   
-                  {/* 영상 데이터베이스가 있는 경우에만 버튼 표시 */}
-                  {quarterVideos[quarter.id] ? (
+                  {/* 영상 자료실 버튼은 데이터가 있을 때만 표시 */}
+                  {quarterVideos[quarter.id] && (
                     <Link
                       href={`/levels/${params.id}/${quarter.id}/videos`}
                       className="block"
@@ -165,14 +172,17 @@ export default function LevelDetail() {
                         </h3>
                       </div>
                     </Link>
-                  ) : (
-                    <div className="bg-gray-50 rounded-xl p-4 border-2 border-gray-100">
-                      <div className="text-3xl mb-2 text-gray-400">📭</div>
+                  )}
+
+                  {/* 권한이 없는 사용자에게는 안내 메시지 표시 */}
+                  {!hasAccess && (
+                    <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gray-50 rounded-xl p-4 border-2 border-gray-100">
+                      <div className="text-3xl mb-2 text-gray-400">🔒</div>
                       <h3 className="text-lg font-bold text-gray-400 font-comic">
-                        영상 자료 준비 중
+                        선생님 전용 콘텐츠
                       </h3>
                       <p className="text-sm text-gray-400 font-comic">
-                        아직 영상 자료가 없어요
+                        이 콘텐츠는 선생님과 관리자만 접근할 수 있습니다.
                       </p>
                     </div>
                   )}

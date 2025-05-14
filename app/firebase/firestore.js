@@ -13,7 +13,8 @@ import {
   deleteDoc,
   serverTimestamp,
   getFirestore,
-  setDoc
+  setDoc,
+  orderBy
 } from 'firebase/firestore';
 
 // db가 null인 경우를 확인하는 함수
@@ -215,6 +216,39 @@ export async function getVideoById(videoId) {
     }
   } catch (error) {
     console.error('비디오 정보 불러오기 오류:', error);
+    throw error;
+  }
+}
+
+// 모든 선생님 목록 가져오기
+export async function getAllTeachers() {
+  try {
+    const usersCollection = getUsersCollection();
+    const teachersQuery = query(
+      usersCollection,
+      where('role', '==', 'teacher'),
+      orderBy('createdAt', 'desc')
+    );
+    
+    const teachersSnapshot = await getDocs(teachersQuery);
+    return teachersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error('선생님 목록 가져오기 오류:', error);
+    throw error;
+  }
+}
+
+// 사용자 데이터 삭제
+export async function deleteUserData(userId) {
+  try {
+    const dbInstance = checkDb();
+    const userRef = doc(dbInstance, 'users', userId);
+    await deleteDoc(userRef);
+  } catch (error) {
+    console.error('사용자 데이터 삭제 오류:', error);
     throw error;
   }
 } 
